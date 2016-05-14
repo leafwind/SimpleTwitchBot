@@ -1,8 +1,13 @@
+# -*- coding: utf-8 -*-
 from math_parser import NumericStringParser
 from threading import Thread
 import time
 import re
+import json
 
+with open('bot_config.json') as fp:
+    CONFIG = json.load(fp)
+nickname = str(CONFIG['username'])
 
 # Set of permissions for the commands
 class Permission:
@@ -55,6 +60,31 @@ class MarkovLog(Command):
             bot.write(self.reply)
 
 
+class FightBack(Command):
+    '''Simple meta-command to output a reply given
+    a specific command. Basic key to value mapping.'''
+
+    perm = Permission.User
+
+    replies = {
+	"!fight {}".format(nickname): "!fight {}",
+    }
+
+    def match(self, bot, user, msg):
+        cmd = msg.lower().strip()
+        for key in self.replies:
+            if cmd == key:
+                return True
+        return False
+
+    def run(self, bot, user, msg):
+        cmd = msg.lower().strip()
+
+        for key, reply in self.replies.items():
+            if cmd == key:
+                bot.write(reply.format(user))
+                break
+
 class SimpleReply(Command):
     '''Simple meta-command to output a reply given
     a specific command. Basic key to value mapping.'''
@@ -62,6 +92,7 @@ class SimpleReply(Command):
     perm = Permission.User
 
     replies = {
+        "太貓啦": "太貓啦 (๑•̀ω•́)ノ",
         "!ping": "pong",
         "!headset": "Logitech G930 Headset",
         "!rts": "/me REAL TRAP SHIT",

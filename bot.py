@@ -11,6 +11,8 @@ import signal
 import json
 import time
 
+from markov_chain import MarkovChat
+
 USERLIST_API = "http://tmi.twitch.tv/group/user/{}/chatters"
 with open('bot_config.json') as fp:
     CONFIG = json.load(fp)
@@ -23,6 +25,7 @@ class TwitchBot(irc.IRCClient, object):
     nickname = str(CONFIG['username'])
     password = str(CONFIG['oauth_key'])
     channel = "#" + str(CONFIG['channel'])
+    markov = MarkovChat()
 
     host_target = False
     pause = False
@@ -305,8 +308,10 @@ class TwitchBot(irc.IRCClient, object):
             cmds.General(self),
             cmds.OwnerCommands(self),
             cmds.SimpleReply(self),
+            cmds.FightBack(self),
             cmds.Calculator(self),
             cmds.Timer(self),
+            cmds.MarkovLog(self),
         ]
 
     def reload(self):

@@ -7,9 +7,15 @@ I've included a couple basic commands as examples, but this is intended to just 
 
 If you want something even more barebone than this, checkout [BareboneTwitchBot](https://github.com/EhsanKia/BareboneTwitchBot).
 
+update: enable `MarkovChat`
+
 # Installation and usage
-All you should need is Pyhton 2.7+ with [Twisted](https://twistedmatrix.com/trac/) installed.
+--All you should need is Pyhton 2.7+ with [Twisted](https://twistedmatrix.com/trac/) installed.--
+All package needed is in requirements.txt, run:
+`sudo apt-get update; sudo apt-get install python-dev -y`
+`pip install requirements.txt` (python-virtualenv is recommended)
 You then copy this project in a folder, configure the bot and run `twitch_irc.py`.
+
 
 #### Configuration:
 Make sure to modify the following values in `bot_config.json`:

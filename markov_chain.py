@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collections import defaultdict, deque
 import cPickle as pickle
 import random
@@ -70,7 +71,8 @@ class MarkovChat(object):
 
     def log(self, msg):
         # speak only when spoken to, or when the spirit moves me
-        if msg.startswith('!') or 'http://' in msg or not msg.count(' '):
+        #if msg.startswith('!') or 'http://' in msg or not msg.count(' '):
+        if msg.startswith('!') or 'http://' in msg or len(msg) < 10:
             return
 
         with open(self.train_data, 'a') as fp:
@@ -142,7 +144,7 @@ class MarkovChat(object):
         all_msgs = [m for m in all_msgs if m.lower() not in ctx]
         if not all_msgs:
             return "Have nothing to say~"
-        return random.choice(all_msgs)
+        return "(๑•̀ω•́)ノ" + random.choice(all_msgs)
 
     def load_file(self, filename):
         try:
