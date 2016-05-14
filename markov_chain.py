@@ -3,10 +3,11 @@ from collections import defaultdict, deque
 import cPickle as pickle
 import random
 import os
+import logging
 
 class MarkovChat(object):
     chain_length = 2
-    chattiness = 0
+    chattiness = 1
     max_words = 25
     messages_to_generate = 5
     separator = '\x01'
@@ -27,6 +28,24 @@ class MarkovChat(object):
         with open(self.filename, 'w') as fp:
             obj = [self.ltable, self.rtable]
             pickle.dump(obj, fp)
+
+    def split_message_chinese(self, message):
+        import jieba
+        words_generator = jieba.cut(message, cut_all=False)
+        words = [w.encode('utf-8') for w in words_generator]
+        if len(words) > self.chain_length:
+            words.append(self.stop_word)
+            words = [self.stop_word, self.stop_word] + words
+            for i in range(len(words) - self.chain_length):
+                list_words = words[i:i + self.chain_length + 1]
+                out = []
+                # remove stop word
+                for s in list_words:
+                    if s == self.stop_word:
+                        out.append(' ')
+                    else:
+                        out.append(s)
+                yield out
 
     def split_message(self, message):
         # split the incoming message into words, i.e. ['what', 'up', 'bro']
@@ -67,30 +86,69 @@ class MarkovChat(object):
             if oldlen == len(gen_words):
                 break
 
-        return ' '.join(gen_words).strip('\x02 ')
+        changed = False
+        last_ascii = True
+        output = ""
+        for word in gen_words:
+            if ord(word[0]) < 128 and last_ascii == False:
+                output += " "
+                output += word
+                last_ascii = True
+            elif ord(word[0]) >= 128 and last_ascii == True:
+                output += " "
+                output += word
+                last_ascii = False
+            elif ord(word[0]) < 128:
+                output += word
+                last_ascii = True
+            elif ord(word[0]) >= 128:
+                output += word
+                last_ascii = False
+        output = " ".join(output.split()).strip(self.stop_word + " ") # remove trailing space
+        #return ' '.join(gen_words).strip('\x02 ')
+        return output
 
     def log(self, msg):
         # speak only when spoken to, or when the spirit moves me
         #if msg.startswith('!') or 'http://' in msg or not msg.count(' '):
-        if msg.startswith('!') or 'http://' in msg or len(msg) < 10:
+        if msg.startswith('!') or 'http://' in msg:
+            return
+        if len(msg) < 10:
+            logging.warning("input msg too short({})".format(len(msg)))
             return
 
         with open(self.train_data, 'a') as fp:
             fp.write(msg + "\n")
 
         messages = []
-        if random.random() < self.chattiness:
-            for words in self.split_message(msg):
-                # if we should say something, generate some messages based on what
-                # was just said and select the longest, then add it to the list
-                best_message = ''
-                for i in range(self.messages_to_generate):
-                    generated = self.generate_message(words)
-                    if len(generated) > len(best_message):
-                        best_message = generated
+        for words in self.split_message_chinese(msg):
+            # if we should say something, generate some messages based on what
+            # was just said and select the longest, then add it to the list
+            best_message = ''
+            for i in range(self.messages_to_generate):
+                generated = self.generate_message(words)
+                print("jeiba '{}' => '{}'".format(" ".join(words), generated))
+                if generated in msg:
+                    #logging.warning("just substring, skip")
+                    continue
+                if len(generated) > len(best_message):
+                    best_message = generated
+                else:
+                    logging.warning("predicted msg len({}) = {} <= len({}) = {}, skip".format(generated, len(generated), best_message, len(best_message)))
+                    continue
 
-                if len(best_message.split()) > 3:
-                    messages.append(best_message)
+            if len(best_message.split()) <= 1: # skip 1 word output
+                logging.warning("only 1 word")
+                continue
+            elif len(best_message) < 5*3: # skip output which is < 5 chinese characters
+                logging.warning("output too short")
+                continue
+            elif random.random() >= self.chattiness:
+                logging.warning("I don't want to chat so I won't append '{}' to candidate".format(best_message))
+                continue
+            else:
+                messages.append(best_message)
+                logging.info("append '{}' to candidate".format(best_message))
 
         self.train(msg)
 
@@ -98,7 +156,7 @@ class MarkovChat(object):
             return random.choice(messages)
 
     def train(self, msg):
-        for words in self.split_message(msg):
+        for words in self.split_message_chinese(msg):
             # grab everything but the last word
             lkey = self.separator.join(words[1:]).lower()
             rkey = self.separator.join(words[:-1]).lower()

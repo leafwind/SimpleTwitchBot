@@ -14,7 +14,7 @@ import time
 from markov_chain import MarkovChat
 
 USERLIST_API = "http://tmi.twitch.tv/group/user/{}/chatters"
-with open('bot_config.json') as fp:
+with open('config.json') as fp:
     CONFIG = json.load(fp)
 
 
@@ -312,6 +312,7 @@ class TwitchBot(irc.IRCClient, object):
             cmds.Calculator(self),
             cmds.Timer(self),
             cmds.MarkovLog(self),
+            cmds.Slap(self),
         ]
 
     def reload(self):

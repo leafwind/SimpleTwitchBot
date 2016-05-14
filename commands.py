@@ -5,8 +5,12 @@ import time
 import re
 import json
 
-with open('bot_config.json') as fp:
+with open('config.json') as fp:
     CONFIG = json.load(fp)
+
+with open('react.json') as fp:
+    react = json.load(fp)
+
 nickname = str(CONFIG['username'])
 
 # Set of permissions for the commands
@@ -52,13 +56,31 @@ class MarkovLog(Command):
         cmd = msg.lower()
         if cmd == "!chat":
             reply = bot.markov.random_chat()
-            bot.write(reply)
+            bot.write(reply.encode('utf8'))
         elif cmd.startswith("!chat about"):
             reply = bot.markov.chat(msg[12:])
-            bot.write(reply)
+            bot.write(reply.encode('utf8'))
         else:
             bot.write(self.reply)
 
+class Slap(Command):
+    '''Simple meta-command to output a reply given
+    a specific command. Basic key to value mapping.'''
+
+    perm = Permission.User
+
+    def match(self, bot, user, msg):
+        return msg.lower().startswith("!slap ")
+
+    def run(self, bot, user, msg):
+        import random
+        target = msg.split(' ', 1)[1]
+        reacts = react['slap'].get(target.lower(), None)
+        if reacts:
+            reply = u"{} 打了 {} 一巴掌。{}：{}"
+            reply = reply.format(user, target, target, unicode(random.choice(reacts)))
+            reply = reply.encode('utf8')
+            bot.write(reply)
 
 class FightBack(Command):
     '''Simple meta-command to output a reply given
