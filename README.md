@@ -22,6 +22,8 @@ pip install requirements.txt
 
 You then copy this project in a folder, configure the bot and run `twitch_irc.py`.
 
+`python twitch_irc.py --channel [channel] --chattiness [chattiness] --models [models]`
+
 
 #### Configuration:
 Make sure to modify the following values in `config.json`:

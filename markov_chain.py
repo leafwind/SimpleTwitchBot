@@ -7,27 +7,35 @@ import logging
 
 class MarkovChat(object):
     chain_length = 2
-    chattiness = 1
+    #chattiness = 0
     max_words = 25
     messages_to_generate = 5
     separator = '\x01'
     stop_word = '\x02'
     ltable = defaultdict(list)
     rtable = defaultdict(list)
-    train_data = 'logs/markov_train.txt'
+    #train_data = 'logs/markov_train.txt'
 
-    def __init__(self):
+    def __init__(self, train_data, additional_train_data, chattiness):
+        self.train_data = train_data
+        self.chattiness = chattiness
+
         self.load_file(self.train_data)
+        logging.info("MarkovChat: load {}".format(self.train_data))
+        for model in additional_train_data:
+            self.load_file(model)
+            logging.info("MarkovChat: load {}".format(model))
 
-    def load_data(self):
-        if os.path.exists(self.filename):
-            with open(self.filename) as fp:
-                self.ltable, self.rtable = pickle.load(fp)
 
-    def save_data(self):
-        with open(self.filename, 'w') as fp:
-            obj = [self.ltable, self.rtable]
-            pickle.dump(obj, fp)
+    #def load_data(self):
+    #    if os.path.exists(self.filename):
+    #        with open(self.filename) as fp:
+    #            self.ltable, self.rtable = pickle.load(fp)
+
+    #def save_data(self):
+    #    with open(self.filename, 'w') as fp:
+    #        obj = [self.ltable, self.rtable]
+    #        pickle.dump(obj, fp)
 
     def split_message_chinese(self, message):
         import jieba
@@ -113,11 +121,11 @@ class MarkovChat(object):
         #if msg.startswith('!') or 'http://' in msg or not msg.count(' '):
         if msg.startswith('!') or 'http://' in msg:
             return
-        if len(msg) < 10:
+        if len(msg) < 15:
             logging.warning("input msg too short({})".format(len(msg)))
             return
 
-        with open(self.train_data, 'a') as fp:
+        with open(self.train_data, 'a+') as fp:
             fp.write(msg + "\n")
 
         messages = []
@@ -206,7 +214,7 @@ class MarkovChat(object):
 
     def load_file(self, filename):
         try:
-            with open(filename) as fp:
+            with open(filename, 'r+') as fp:
                 lines = fp.readlines()
         except:
             lines = []

@@ -24,13 +24,19 @@ class TwitchBot(irc.IRCClient, object):
     ignore_list = CONFIG['ignore_list']
     nickname = str(CONFIG['username'])
     password = str(CONFIG['oauth_key'])
-    channel = "#" + str(CONFIG['channel'])
-    markov = MarkovChat()
+    #channel = "#" + str(CONFIG['channel'])
+    #channel = "#" + "leafwind"
+    #markov = MarkovChat("train/leafwind.txt")
 
     host_target = False
     pause = False
     commands = []
 
+    def __init__(self, factory):
+        self.factory = factory
+        self.markov = MarkovChat(factory.channel_file, factory.model_files, factory.chattiness)
+        self.channel = "#" + factory.channel
+        
     def signedOn(self):
         self.factory.wait_time = 1
         logging.warning("Signed on as {}".format(self.nickname))
