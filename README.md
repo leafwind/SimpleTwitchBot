@@ -16,6 +16,7 @@ All package needed is in requirements.txt, run:
 
 ```
 sudo apt-get update; sudo apt-get install python-dev -y
+sudo apt-get install libffi-dev libssl-dev # for pyOpenSSL
 pip install requirements.txt
 ```
 (python-virtualenv is recommended)
