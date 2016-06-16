@@ -20,6 +20,7 @@ with open('config.json') as fp:
 
 class TwitchBot(irc.IRCClient, object):
     last_warning = defaultdict(int)
+    last_dispatch = 0
     owner_list = CONFIG['owner_list']
     ignore_list = CONFIG['ignore_list']
     nickname = str(CONFIG['username'])
@@ -250,7 +251,8 @@ class TwitchBot(irc.IRCClient, object):
                     self.write(reply.format(user, perm_levels[cmd.perm]))
                 else:
                     cmd.run(self, user, msg)
-                    first = False
+                    logging.error("running {}".format(cname))
+                    #first = False
             except:
                 logging.error(traceback.format_exc())
 
@@ -311,14 +313,16 @@ class TwitchBot(irc.IRCClient, object):
         self.close_commands()
         cmds = reload(commands)
         self.commands = [
-            cmds.General(self),
             cmds.OwnerCommands(self),
             cmds.SimpleReply(self),
             cmds.FightBack(self),
             cmds.Calculator(self),
             cmds.Timer(self),
             cmds.MarkovLog(self),
-            cmds.Slap(self),
+            #cmds.RandomGive(self),
+            cmds.ChannelCommands(self),
+            cmds.SlackLog(self),
+            cmds.StreamStatus(self),
         ]
 
     def reload(self):

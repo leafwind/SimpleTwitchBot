@@ -4,12 +4,27 @@ from threading import Thread
 import time
 import re
 import json
+import requests
+import random
+from slack_util import Slack
+
+channel_commands = {}
+with open('channel_commands.json') as fp:
+    channel_commands_orig = json.load(fp)
+    for u_channel in channel_commands_orig:
+        b_channel = u_channel.encode('utf-8')
+        if b_channel not in channel_commands:
+            channel_commands[b_channel] = {}
+        for u_cmd in channel_commands_orig[u_channel]:
+            b_cmd = u_cmd.encode('utf-8')
+            if b_cmd not in channel_commands[b_channel]:
+                channel_commands[b_channel][b_cmd] = []
+            for u_output in channel_commands_orig[u_channel][u_cmd]:
+                b_output = u_output.encode('utf-8')
+                channel_commands[b_channel][b_cmd].append(b_output)
 
 with open('config.json') as fp:
     CONFIG = json.load(fp)
-
-with open('react.json') as fp:
-    react = json.load(fp)
 
 nickname = str(CONFIG['username'])
 
@@ -46,41 +61,38 @@ class MarkovLog(Command):
     perm = Permission.User
 
     def match(self, bot, user, msg):
-        self.reply = bot.markov.log(msg)
+        #self.reply = bot.markov.log(msg)
         cmd = msg.lower()
-        case1 = cmd.startswith("!chat about")
-        case2 = cmd == "!chat"
-        return case1 or case2 or self.reply
+        #case1 = cmd.startswith("!chat about")
+        #case2 = cmd == "!chat"
+        #return case1 or case2 or self.reply
+        
+        # new
+        return cmd.startswith("!chat")# or self.reply
 
     def run(self, bot, user, msg):
         cmd = msg.lower()
-        if cmd == "!chat":
-            reply = bot.markov.random_chat()
-            bot.write(reply.encode('utf8'))
-        elif cmd.startswith("!chat about"):
-            reply = bot.markov.chat(msg[12:])
-            bot.write(reply.encode('utf8'))
-        else:
-            bot.write(self.reply)
+        #if cmd == "!chat":
+        #    reply = bot.markov.random_chat()
+        #    bot.write(reply)
+        #elif cmd.startswith("!chat about"):
+        #    reply = bot.markov.chat(msg[12:])
+        #    bot.write(reply)
+        msg = msg[6:]
+        import logging
+        logging.error(msg)
+        reply = bot.markov.log(msg, 1)
+        bot.write(reply)
 
-class Slap(Command):
-    '''Simple meta-command to output a reply given
-    a specific command. Basic key to value mapping.'''
-
+class SlackLog(Command):
     perm = Permission.User
 
     def match(self, bot, user, msg):
-        return msg.lower().startswith("!slap ")
+        return True
 
     def run(self, bot, user, msg):
-        import random
-        target = msg.split(' ', 1)[1]
-        reacts = react['slap'].get(target.lower(), None)
-        if reacts:
-            reply = u"{} 打了 {} 一巴掌。{}：{}"
-            reply = reply.format(user, target, target, unicode(random.choice(reacts)))
-            reply = reply.encode('utf8')
-            bot.write(reply)
+        slack = Slack()
+        slack.post_message(bot.factory.channel, msg, ":rabbit:", username=user)
 
 class FightBack(Command):
     '''Simple meta-command to output a reply given
@@ -104,6 +116,7 @@ class FightBack(Command):
 
         for key, reply in self.replies.items():
             if cmd == key:
+                time.sleep(3)
                 bot.write(reply.format(user))
                 break
 
@@ -160,32 +173,75 @@ class Calculator(Command):
         except:
             bot.write("{} = ???".format(expr))
 
-
-class General(Command):
-    '''Some miscellaneous commands in here'''
+class ChannelCommands(Command):
     perm = Permission.User
-
     def match(self, bot, user, msg):
-        cmd = msg.lower()
-        if cmd.startswith("!active"):
-            return True
-        return False
+        global channel_commands
+        return True
 
     def run(self, bot, user, msg):
-        reply = None
-        cmd = msg.lower()
+        cmd = msg.lower().strip()
+        global channel_commands
+        channel = bot.factory.channel
+        if channel in channel_commands:
+            if cmd.lstrip("!") in channel_commands[channel]:
+                output = random.choice(channel_commands[channel][cmd.lstrip("!")])
+                bot.write("{}".format(output))
 
-        if cmd.startswith("!active"):
-            active = len(bot.get_active_users())
-            if active == 1:
-                reply = "{}: There is {} active user in chat"
-            else:
-                reply = "{}: There are {} active users in chat"
-            reply = reply.format(user, active)
+class StreamStatus(Command):
+    perm = Permission.User
+    online = False
 
-        if reply:
-            bot.write(reply)
+    def get_status(self, bot):
+        url = 'https://api.twitch.tv/kraken/streams/' + bot.factory.channel
+        headers = {'Accept': 'application/vnd.twitchtv.v3+json'}
+        r = requests.get(url, headers=headers)
+        info = json.loads(r.text)
+        if 'stream' not in info or info['stream'] == None:
+            (self.n_user, self.created_at) = (0, "")
+            return False
+        else:
+            self.n_user = info['stream']['viewers']
+            self.created_at = info['stream']['created_at']
+            return True
 
+    def match(self, bot, user, msg):
+        current_status = self.get_status(bot)
+        #print("last: {}, current: {}".format(self.online, current_status))
+        if self.online != current_status:
+            self.online = current_status
+            return True
+        else:
+            return False
+
+    def run(self, bot, user, msg):
+        slack = Slack()
+        if self.online:
+            slack.post_message(bot.factory.channel, "<!group> 開台囉！", ":rabbit:", username=user)
+        else:
+            slack.post_message(bot.factory.channel, "<!group> 關台哭哭喔～～！", ":rabbit:", username=user)
+
+
+class RandomGive(Command):
+    perm = Permission.User
+    def match(self, bot, user, msg):
+        url = 'https://api.twitch.tv/kraken/streams/' + bot.factory.channel
+        headers = {'Accept': 'application/vnd.twitchtv.v3+json'}
+        r = requests.get(url, headers=headers)
+        info = json.loads(r.text)
+        if 'stream' not in info or info['stream'] == None:
+            return False
+        if 'viewers' in info['stream'] and time.time() - bot.last_dispatch > 1800: # every 30 mins
+            if bot.last_dispatch > 0:
+                if len(bot.get_active_users()) > 0:
+                    lucky_user = random.choice(bot.get_active_users())
+                    bot.write("!coins pay {} 1".format(lucky_user))
+            bot.last_dispatch = time.time()
+            return True
+        else:
+            return False
+    def run(self, bot, user, msg):
+        pass
 
 class Timer(Command):
     '''Sets a timer that will alert you when it runs out'''
@@ -247,14 +303,19 @@ class OwnerCommands(Command):
             return True
         elif cmd.startswith("!wakeup"):
             return True
+        elif cmd.startswith("!say"):
+            return True
 
         return False
 
     def run(self, bot, user, msg):
         cmd = msg.lower().replace(' ', '')
         if cmd.startswith("!sleep"):
-            bot.write("Going to sleep... bye!")
+            bot.write("(๑•̀ω•́)ノ洗洗睡去")
             bot.pause = True
         elif cmd.startswith("!wakeup"):
-            bot.write("Good morning everyone!")
+            bot.write("(๑•̀ω•́)ノ早安")
             bot.pause = False
+        elif cmd.startswith("!say"):
+            bot.write(msg[4:].lstrip(" "))
+

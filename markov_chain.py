@@ -116,13 +116,15 @@ class MarkovChat(object):
         #return ' '.join(gen_words).strip('\x02 ')
         return output
 
-    def log(self, msg):
+    def log(self, msg, chattiness=None):
+        if not chattiness:
+            chattiness = self.chattiness
         # speak only when spoken to, or when the spirit moves me
         #if msg.startswith('!') or 'http://' in msg or not msg.count(' '):
         if msg.startswith('!') or 'http://' in msg:
             return
         if len(msg) < 15:
-            logging.warning("input msg too short({})".format(len(msg)))
+            logging.warning("[NOlog] input msg too short({})".format(len(msg)))
             return
 
         with open(self.train_data, 'a+') as fp:
@@ -151,7 +153,7 @@ class MarkovChat(object):
             elif len(best_message) < 5*3: # skip output which is < 5 chinese characters
                 logging.warning("output too short")
                 continue
-            elif random.random() >= self.chattiness:
+            elif random.random() >= chattiness:
                 logging.warning("I don't want to chat so I won't append '{}' to candidate".format(best_message))
                 continue
             else:
@@ -199,7 +201,7 @@ class MarkovChat(object):
                 k = random.choice(keys)
                 words = [k] + words
         if len(words) < 2:
-            return "Have nothing to say~"
+            return ""
 
         all_msgs = []
         for ctx in zip(words, words[1:]):
@@ -209,7 +211,7 @@ class MarkovChat(object):
         ctx = context.lower()
         all_msgs = [m for m in all_msgs if m.lower() not in ctx]
         if not all_msgs:
-            return "Have nothing to say~"
+            return ""
         return "(๑•̀ω•́)ノ" + random.choice(all_msgs)
 
     def load_file(self, filename):
