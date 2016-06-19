@@ -7,11 +7,22 @@ class Slack(object):
         config = yaml.load(open('slack.conf', 'r'))
         token = config.get('SLACK_TOKEN')
         self.sc = SlackClient(token)
+        self.channel_list = {}
+        self._get_channel_list()
+
+    def _get_channel_list(self):
+        result = self.sc.api_call("channels.list")
+        for channel in result["channels"]:
+            self.channel_list[channel["name"]] = channel["id"]
+        result = self.sc.api_call("groups.list")
+        for channel in result["groups"]:
+            self.channel_list[channel["name"]] = channel["id"]
+        return 
 
     def post_message(self, channel, text, icon_emoji, username='schubot'):
         if icon_emoji == None:
             icon_emoji = ':rabbit:'
-        self.sc.api_call("chat.postMessage", channel=channel, text=text, username=username, icon_emoji=icon_emoji)
+        result = self.sc.api_call("chat.postMessage", channel=channel, text=text, username=username, icon_emoji=icon_emoji)
 
     def get_channelname(self, channel_id):
         channel_info = self.sc.api_call("channels.info", channel=channel_id)

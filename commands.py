@@ -7,6 +7,7 @@ import json
 import requests
 import random
 from slack_util import Slack
+slack = Slack()
 
 channel_commands = {}
 with open('channel_commands.json') as fp:
@@ -85,14 +86,14 @@ class MarkovLog(Command):
         bot.write(reply)
 
 class SlackLog(Command):
+    global slack
     perm = Permission.User
 
     def match(self, bot, user, msg):
         return True
 
     def run(self, bot, user, msg):
-        slack = Slack()
-        slack.post_message(bot.factory.channel, msg, ":rabbit:", username=user)
+        slack.post_message(slack.channel_list[bot.factory.channel], msg, ":rabbit:", username=user)
 
 class FightBack(Command):
     '''Simple meta-command to output a reply given
@@ -189,6 +190,7 @@ class ChannelCommands(Command):
                 bot.write("{}".format(output))
 
 class StreamStatus(Command):
+    global slack
     perm = Permission.User
     online = False
 
@@ -215,11 +217,10 @@ class StreamStatus(Command):
             return False
 
     def run(self, bot, user, msg):
-        slack = Slack()
         if self.online:
-            slack.post_message(bot.factory.channel, "<!group> 開台囉！", ":rabbit:", username=user)
+            slack.post_message(slack.channel_list[bot.factory.channel], "<!group> 開台囉！", ":rabbit:", username=user)
         else:
-            slack.post_message(bot.factory.channel, "<!group> 關台哭哭喔～～！", ":rabbit:", username=user)
+            slack.post_message(slack.channel_list[bot.factory.channel], "<!group> 關台哭哭喔～～！", ":rabbit:", username=user)
 
 
 class RandomGive(Command):

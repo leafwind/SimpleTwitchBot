@@ -318,7 +318,7 @@ class TwitchBot(irc.IRCClient, object):
             cmds.FightBack(self),
             cmds.Calculator(self),
             cmds.Timer(self),
-            cmds.MarkovLog(self),
+            #cmds.MarkovLog(self),
             #cmds.RandomGive(self),
             cmds.ChannelCommands(self),
             cmds.SlackLog(self),
