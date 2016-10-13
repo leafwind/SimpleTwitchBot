@@ -185,7 +185,17 @@ class ChannelCommands(Command):
         global channel_commands
         channel = bot.factory.channel
         if channel in channel_commands:
-            if cmd.lstrip("!") in channel_commands[channel]:
+            if cmd.lstrip("!") == '會開嗎':
+                day_ratio = (int(time.time()) + 8 * 3600) % 86400 / 3600.0
+                if day_ratio < 10.0:
+                    bot.write("早上有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
+                elif day_ratio < 14.0:
+                    bot.write("下午有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
+                elif day_ratio < 22.0:
+                    bot.write("晚上有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
+                else:
+                    bot.write("明天有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
+            elif cmd.lstrip("!") in channel_commands[channel]:
                 output = random.choice(channel_commands[channel][cmd.lstrip("!")])
                 bot.write("{}".format(output))
 
