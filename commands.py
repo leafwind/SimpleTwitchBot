@@ -7,7 +7,10 @@ import json
 import requests
 import random
 from slack_util import Slack
+import freq_reply
 slack = Slack()
+
+count_freq = {}
 
 channel_commands = {}
 with open('channel_commands.json') as fp:
@@ -173,6 +176,34 @@ class Calculator(Command):
             bot.write(reply)
         except:
             bot.write("{} = ???".format(expr))
+
+class FreqReply(Command):
+    global count_freq
+    perm = Permission.User
+    def match(self, bot, user, msg):
+        return True
+
+    def run(self, bot, user, msg):
+        cmd = msg.lower().strip()
+        channel = bot.factory.channel
+        if channel in freq_reply.mapping:
+            mapping = freq_reply.mapping[channel]
+            for key in mapping:
+                for trigger in mapping[key]["input"]:
+                    if trigger in cmd:
+                        if channel not in count_freq:
+                            count_freq[channel] = {}
+                        if key not in count_freq[channel]:
+                            count_freq[channel][key] = {"begin": 0, "count": 0}
+                        now = int(time.time())
+                        if now - count_freq[channel][key]["begin"] > 60:
+                            count_freq[channel][key]["begin"] = now
+                            count_freq[channel][key]["count"] = 1
+                        else:
+                            count_freq[channel][key]["count"] += 1
+                            if count_freq[channel][key]["count"] >= 3:
+                                bot.write("{}".format(mapping[key]["output"]))
+                                count_freq[channel][key] = {"begin": 0, "count": 0}
 
 class ChannelCommands(Command):
     perm = Permission.User
