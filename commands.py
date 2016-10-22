@@ -8,6 +8,8 @@ import requests
 import random
 from slack_util import Slack
 import freq_reply
+import sqlite3
+import calendar
 slack = Slack()
 
 count_freq = {}
@@ -31,6 +33,7 @@ with open('config.json') as fp:
     CONFIG = json.load(fp)
 
 nickname = str(CONFIG['username'])
+client_id = str(CONFIG['client_id'])
 
 # Set of permissions for the commands
 class Permission:
@@ -191,18 +194,21 @@ class ChannelCommands(Command):
                     bot.write("晚上有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
                 else:
                     bot.write("明天有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
-            elif cmd.startswith("!") and cmd.lstrip("!") in channel_commands[channel]:
+            elif cmd.lstrip("!") in channel_commands[channel]:
                 output = random.choice(channel_commands[channel][cmd.lstrip("!")])
                 bot.write("{}".format(output))
 
+class SignInLadder(Command):
+    pass
+
 class SignIn(Command):
-    global slack
     perm = Permission.User
     online = False
 
     def get_status(self, bot):
+        global client_id
         url = 'https://api.twitch.tv/kraken/streams/' + bot.factory.channel
-        headers = {'Accept': 'application/vnd.twitchtv.v3+json'}
+        headers = {'Accept': 'application/vnd.twitchtv.v3+json', 'Client-ID': client_id}
         r = requests.get(url, headers=headers)
         info = json.loads(r.text)
         if 'stream' not in info or info['stream'] == None:
@@ -211,24 +217,40 @@ class SignIn(Command):
         else:
             self.n_user = info['stream']['viewers']
             self.created_at = info['stream']['created_at']
+            struct_time_created = time.strptime(self.created_at, "%Y-%m-%dT%H:%M:%SZ")
+            ts_created = calendar.timegm(struct_time_created)
+            self.minutes_passed = int((self.now - ts_created) / 60)
             return True
 
     def match(self, bot, user, msg):
         cmd = msg.lower().strip()
-        if cmd in ["!sign", "!簽到"]:
+        if cmd in ["!sign", "!簽到", "!打卡"]:
             return True
         else:
             return False
 
     def run(self, bot, user, msg):
+        self.now = int(time.time())
+        self.ts_day = int(self.now / 86400.0) * 86400
         self.online = self.get_status(bot)
         if self.online:
-            struct_time_created = time.strptime(self.created_at, "%Y-%m-%dT%H:%M:%SZ")
-            ts_created = time.mktime(struct_time_created)
-            minutes_passed = (int(time.time()) - ts_created) / 60
-            bot.write("[測試] 簽到成功 {} <3 已經上課 {} 分鐘囉快坐好吧".format(user, minutes_passed))
+            conn = sqlite3.connect("{}.db".format(bot.factory.channel))
+            c = conn.cursor()
+            c.execute('''create table if not exists signin (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, ts_day INTEGER, UNIQUE (user, ts_day) ON CONFLICT IGNORE)''')
+            conn.commit()
+            c.execute('''SELECT 1 from signin where user = \'{}\' and ts_day = {}'''.format(user, self.ts_day))
+            result = c.fetchall()
+            if len(result) != 0:
+                #print("已經上課 {} 分鐘囉".format(self.minutes_passed))
+                pass
+            else:
+                c.execute('''insert into signin (user, ts_day) VALUES (\'{}\', {});'''.format(user, self.ts_day))
+                conn.commit()
+                c.execute('''SELECT count(1) from signin where user = \'{}\';'''.format(user))
+                result = c.fetchall()
+                bot.write("{} 簽到成功！累積簽到 {} 次，已經上課 {} 分鐘囉快坐好吧".format(user, result[0][0], self.minutes_passed))
         else:
-            bot.write("[測試] 還沒上課喔（twitch 秀逗的話等等再來吧）")
+            pass
 
 
 class StreamStatus(Command):

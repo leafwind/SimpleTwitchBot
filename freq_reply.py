@@ -39,7 +39,7 @@ mapping = {
         "dumpling": {
             "trigger_list": ["餃"],
             "response": "ヽ(`Д´)ノ 不要跟我說水餃",
-            "freq": 2,
+            "freq": 5,
         },
     }
 }
