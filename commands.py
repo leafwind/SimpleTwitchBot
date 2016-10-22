@@ -124,36 +124,6 @@ class FightBack(Command):
                 bot.write(reply.format(user))
                 break
 
-class SimpleReply(Command):
-    '''Simple meta-command to output a reply given
-    a specific command. Basic key to value mapping.'''
-
-    perm = Permission.User
-
-    replies = {
-        "太貓啦": "太貓啦 (๑•̀ω•́)ノ",
-        "!ping": "pong",
-        "!headset": "Logitech G930 Headset",
-        "!rts": "/me REAL TRAP SHIT",
-        "!nfz": "/me NO FLEX ZONE!",
-    }
-
-    def match(self, bot, user, msg):
-        cmd = msg.lower().strip()
-        for key in self.replies:
-            if cmd == key:
-                return True
-        return False
-
-    def run(self, bot, user, msg):
-        cmd = msg.lower().strip()
-
-        for key, reply in self.replies.items():
-            if cmd == key:
-                bot.write(reply)
-                break
-
-
 class Calculator(Command):
     ''' A chat calculator that can do some pretty
     advanced stuff like sqrt and trigonometry
@@ -189,21 +159,30 @@ class FreqReply(Command):
         if channel in freq_reply.mapping:
             mapping = freq_reply.mapping[channel]
             for key in mapping:
-                for trigger in mapping[key]["input"]:
+                for trigger in mapping[key]["trigger_list"]:
                     if trigger in cmd:
                         if channel not in count_freq:
                             count_freq[channel] = {}
                         if key not in count_freq[channel]:
-                            count_freq[channel][key] = {"begin": 0, "count": 0}
+                            count_freq[channel][key] = {}
                         now = int(time.time())
-                        if now - count_freq[channel][key]["begin"] > 60:
-                            count_freq[channel][key]["begin"] = now
-                            count_freq[channel][key]["count"] = 1
+                        begin = count_freq[channel][key].get("begin", 0)
+                        count = count_freq[channel][key].get("count", 0)
+                        freq = mapping[key].get("freq", 3)
+                        if now - begin > 60:
+                            begin = now
+                            count = 1
+                            print("reset {} counter - begin ts: {}, count: {}, freq: {}".format(key, begin, count, freq))
                         else:
-                            count_freq[channel][key]["count"] += 1
-                            if count_freq[channel][key]["count"] >= 3:
-                                bot.write("{}".format(mapping[key]["output"]))
-                                count_freq[channel][key] = {"begin": 0, "count": 0}
+                            count += 1
+                            print("++ {} counter - begin ts: {}, count: {}, freq: {}".format(key, begin, count, freq))
+                            if count >= freq:
+                                msg = "@{} {}".format(user, mapping[key]["response"])
+                                bot.write(msg)
+                                begin = 0
+                                count = 0
+                                print("write msg: {}".format(msg))
+                        count_freq[channel][key] = {"begin": begin, "count": count}
 
 class ChannelCommands(Command):
     perm = Permission.User
@@ -226,7 +205,7 @@ class ChannelCommands(Command):
                     bot.write("晚上有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
                 else:
                     bot.write("明天有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
-            elif cmd.lstrip("!") in channel_commands[channel]:
+            elif cmd.startswith("!") and cmd.lstrip("!") in channel_commands[channel]:
                 output = random.choice(channel_commands[channel][cmd.lstrip("!")])
                 bot.write("{}".format(output))
 

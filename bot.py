@@ -314,7 +314,6 @@ class TwitchBot(irc.IRCClient, object):
         cmds = reload(commands)
         self.commands = [
             cmds.OwnerCommands(self),
-            cmds.SimpleReply(self),
             cmds.FightBack(self),
             cmds.Calculator(self),
             cmds.Timer(self),
@@ -323,7 +322,7 @@ class TwitchBot(irc.IRCClient, object):
             cmds.ChannelCommands(self),
             cmds.FreqReply(self),
             cmds.SlackLog(self),
-            cmds.StreamStatus(self),
+            #cmds.StreamStatus(self),
         ]
 
     def reload(self):

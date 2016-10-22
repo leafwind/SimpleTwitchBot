@@ -2,24 +2,44 @@
 mapping = {
     "wow_tomato": {
         "qq": {
-            "input": ["qq", "qaq"],
-            "output": "(☍﹏⁰) ヽ(･ω･｀) 幫QQ",
+            "trigger_list": ["qq", "qaq"],
+            "response": "(☍﹏⁰) ヽ(･ω･｀) 幫QQ",
         },
         "p": {
-            "input": ["屁", "闢勒", "p勒"],
-            "output": "ヽ(#`Д´)ﾉ 屁勒",
+            "trigger_list": ["屁", "闢勒", "p勒"],
+            "response": "ヽ(#`Д´)ﾉ 屁勒",
         },
         "hs": {
-            "input": ["hs"],
-            "output": "ε=ε=ヾ(;ﾟдﾟ)/ hshshshsh",
+            "trigger_list": ["hs"],
+            "response": "ε=ε=ヾ(;ﾟдﾟ)/ hshshshsh",
         },
         "miss": {
-            "input": ["才剛來", "沒跟到", "就要關了", "來不及", "一來就", "晚一步", "太晚了", "沒趕上"],
-            "output": "(´;ω;`)ヾ(･∀･`) 下次請早",
+            "trigger_list": ["才剛來", "沒跟到", "就要關了", "來不及", "一來就", "晚一步", "太晚了", "沒趕上"],
+            "response": "(´;ω;`)ヾ(･∀･`) 下次請早",
+            "freq": 2,
         },
         "xd": {
-            "input": ["xd"],
-            "output": "XDDDDD (我不懂人類的笑點不過跟著笑就對了)",
+            "trigger_list": ["xd", "www"],
+            "response": "wwwwwwww",
+            "freq": 5,
+        },
+        "cc": {
+            "trigger_list": ["ccㄏㄏ", "cc呵呵", "cc喝喝"],
+            "response": "ヽ(́◕◞౪◟◕‵)ﾉ CCㄏㄏ",
+            "freq": 2,
+        },
+        "ok": {
+            "trigger_list": ["好的", "好ㄉ"],
+            "response": "(ゝ∀･) 好的好的",
+        },
+        "gif": {
+            "trigger_list": ["gif", "還在這", "卡關"],
+            "response": "ヽ(∀ﾟ )人(ﾟ∀ﾟ)人( ﾟ∀)人(∀ﾟ )人(ﾟ∀ﾟ)人( ﾟ∀)ﾉ 計數台",
+        },
+        "dumpling": {
+            "trigger_list": ["餃"],
+            "response": "ヽ(`Д´)ノ 不要跟我說水餃",
+            "freq": 2,
         },
     }
 }
