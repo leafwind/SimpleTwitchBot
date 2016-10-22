@@ -195,6 +195,42 @@ class ChannelCommands(Command):
                 output = random.choice(channel_commands[channel][cmd.lstrip("!")])
                 bot.write("{}".format(output))
 
+class SignIn(Command):
+    global slack
+    perm = Permission.User
+    online = False
+
+    def get_status(self, bot):
+        url = 'https://api.twitch.tv/kraken/streams/' + bot.factory.channel
+        headers = {'Accept': 'application/vnd.twitchtv.v3+json'}
+        r = requests.get(url, headers=headers)
+        info = json.loads(r.text)
+        if 'stream' not in info or info['stream'] == None:
+            (self.n_user, self.created_at) = (0, "")
+            return False
+        else:
+            self.n_user = info['stream']['viewers']
+            self.created_at = info['stream']['created_at']
+            return True
+
+    def match(self, bot, user, msg):
+        cmd = msg.lower().strip()
+        if cmd in ["!sign", "!簽到"]:
+            return True
+        else:
+            return False
+
+    def run(self, bot, user, msg):
+        self.online = self.get_status(bot)
+        if self.online:
+            struct_time_created = time.strptime(self.created_at, "%Y-%m-%dT%H:%M:%SZ")
+            ts_created = time.mktime(struct_time_created)
+            minutes_passed = (int(time.time()) - ts_created) / 60
+            bot.write("[測試] 簽到成功 {} <3 已經上課 {} 分鐘囉快坐好吧".format(user, minutes_passed))
+        else:
+            bot.write("[測試] 還沒上課喔（twitch 秀逗的話等等再來吧）")
+
+
 class StreamStatus(Command):
     global slack
     perm = Permission.User

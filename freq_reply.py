@@ -2,7 +2,7 @@
 mapping = {
     "wow_tomato": {
         "qq": {
-            "trigger_list": ["qq", "qaq"],
+            "trigger_list": ["qq", "qaq", "biblethump"],
             "response": "(☍﹏⁰) ヽ(･ω･｀) 幫QQ",
         },
         "p": {

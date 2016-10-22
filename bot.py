@@ -321,6 +321,7 @@ class TwitchBot(irc.IRCClient, object):
             cmds.ChannelCommands(self),
             cmds.FreqReply(self),
             cmds.SlackLog(self),
+            cmds.SignIn(self),
             #cmds.StreamStatus(self),
         ]
 
