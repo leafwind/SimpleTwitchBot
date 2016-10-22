@@ -314,7 +314,6 @@ class TwitchBot(irc.IRCClient, object):
         cmds = reload(commands)
         self.commands = [
             cmds.OwnerCommands(self),
-            cmds.FightBack(self),
             cmds.Calculator(self),
             cmds.Timer(self),
             #cmds.MarkovLog(self),

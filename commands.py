@@ -98,32 +98,6 @@ class SlackLog(Command):
     def run(self, bot, user, msg):
         slack.post_message(slack.channel_list[bot.factory.channel], msg, ":rabbit:", username=user)
 
-class FightBack(Command):
-    '''Simple meta-command to output a reply given
-    a specific command. Basic key to value mapping.'''
-
-    perm = Permission.User
-
-    replies = {
-	"!fight {}".format(nickname): "!fight {}",
-    }
-
-    def match(self, bot, user, msg):
-        cmd = msg.lower().strip()
-        for key in self.replies:
-            if cmd == key:
-                return True
-        return False
-
-    def run(self, bot, user, msg):
-        cmd = msg.lower().strip()
-
-        for key, reply in self.replies.items():
-            if cmd == key:
-                time.sleep(3)
-                bot.write(reply.format(user))
-                break
-
 class Calculator(Command):
     ''' A chat calculator that can do some pretty
     advanced stuff like sqrt and trigonometry
