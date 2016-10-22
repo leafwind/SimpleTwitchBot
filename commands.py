@@ -198,9 +198,6 @@ class ChannelCommands(Command):
                 output = random.choice(channel_commands[channel][cmd.lstrip("!")])
                 bot.write("{}".format(output))
 
-class SignInLadder(Command):
-    pass
-
 class SignIn(Command):
     perm = Permission.User
     online = False
