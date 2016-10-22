@@ -283,28 +283,6 @@ class StreamStatus(Command):
         else:
             slack.post_message(slack.channel_list[bot.factory.channel], "<!group> 關台哭哭喔～～！", ":rabbit:", username=user)
 
-
-class RandomGive(Command):
-    perm = Permission.User
-    def match(self, bot, user, msg):
-        url = 'https://api.twitch.tv/kraken/streams/' + bot.factory.channel
-        headers = {'Accept': 'application/vnd.twitchtv.v3+json'}
-        r = requests.get(url, headers=headers)
-        info = json.loads(r.text)
-        if 'stream' not in info or info['stream'] == None:
-            return False
-        if 'viewers' in info['stream'] and time.time() - bot.last_dispatch > 1800: # every 30 mins
-            if bot.last_dispatch > 0:
-                if len(bot.get_active_users()) > 0:
-                    lucky_user = random.choice(bot.get_active_users())
-                    bot.write("!coins pay {} 1".format(lucky_user))
-            bot.last_dispatch = time.time()
-            return True
-        else:
-            return False
-    def run(self, bot, user, msg):
-        pass
-
 class Timer(Command):
     '''Sets a timer that will alert you when it runs out'''
     perm = Permission.Moderator
