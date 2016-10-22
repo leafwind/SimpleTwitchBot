@@ -151,7 +151,15 @@ class FreqReply(Command):
     global count_freq
     perm = Permission.User
     def match(self, bot, user, msg):
-        return True
+        cmd = msg.lower().strip()
+        channel = bot.factory.channel
+        if channel in freq_reply.mapping:
+            mapping = freq_reply.mapping[channel]
+            for key in mapping:
+                for trigger in mapping[key]["trigger_list"]:
+                    if trigger in cmd:
+                        return True
+        return False
 
     def run(self, bot, user, msg):
         cmd = msg.lower().strip()
@@ -186,13 +194,17 @@ class FreqReply(Command):
 
 class ChannelCommands(Command):
     perm = Permission.User
+    global channel_commands
     def match(self, bot, user, msg):
-        global channel_commands
-        return True
+        cmd = msg.lower().strip()
+        channel = bot.factory.channel
+        if channel in channel_commands:
+            if cmd.lstrip("!") in channel_commands[channel] or cmd.lstrip("!") == '會開嗎':
+                return True
+        return False
 
     def run(self, bot, user, msg):
         cmd = msg.lower().strip()
-        global channel_commands
         channel = bot.factory.channel
         if channel in channel_commands:
             if cmd.lstrip("!") == '會開嗎':
