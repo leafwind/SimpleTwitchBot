@@ -90,6 +90,7 @@ class MarkovLog(Command):
         bot.write(reply)
 
 class Log(Command):
+    global CONFIG
     perm = Permission.User
 
     def match(self, bot, user, msg):
@@ -100,7 +101,7 @@ class Log(Command):
         channel = bot.factory.channel
 
         logging.warning("user: {}, channel: {}, ts: {}, msg: {}".format(user, channel, now, msg))
-        conn = sqlite3.connect("{}.db".format(channel))
+        conn = sqlite3.connect(CONFIG['db'])
         c = conn.cursor()
         c.execute('''insert into chat (user, channel, ts, msg) VALUES (\'{}\', \'{}\', {}, \'{}\');'''.format(user, channel, now, msg))
         conn.commit()
@@ -232,23 +233,24 @@ class SignIn(Command):
             return False
 
     def run(self, bot, user, msg):
+        global CONFIG
         self.now = int(time.time())
         self.ts_day = int(self.now / 86400.0) * 86400
         self.online = self.get_status(bot)
         if self.online:
-            conn = sqlite3.connect("{}.db".format(bot.factory.channel))
+            conn = sqlite3.connect(CONFIG['db'])
             c = conn.cursor()
-            c.execute('''create table if not exists signin (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, ts_day INTEGER, UNIQUE (user, ts_day) ON CONFLICT IGNORE)''')
+            c.execute('''create table if not exists signin (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, ts_day INTEGER, channel TEXT, UNIQUE (user, ts_day, channel) ON CONFLICT IGNORE)''')
             conn.commit()
-            c.execute('''SELECT 1 from signin where user = \'{}\' and ts_day = {}'''.format(user, self.ts_day))
+            c.execute('''SELECT 1 from signin where user = \'{}\' and ts_day = {} and channel = \'{}\';'''.format(user, self.ts_day, bot.factory.channel))
             result = c.fetchall()
             if len(result) != 0:
                 #print("已經上課 {} 分鐘囉".format(self.minutes_passed))
                 pass
             else:
-                c.execute('''insert into signin (user, ts_day) VALUES (\'{}\', {});'''.format(user, self.ts_day))
+                c.execute('''insert into signin (user, ts_day, channel) VALUES (\'{}\', {}, \'{}\');'''.format(user, self.ts_day, bot.factory.channel))
                 conn.commit()
-                c.execute('''SELECT count(1) from signin where user = \'{}\';'''.format(user))
+                c.execute('''SELECT count(1) from signin where user = \'{}\' and channel = \'{}\';'''.format(user, bot.factory.channel))
                 result = c.fetchall()
                 bot.write("{} 簽到成功！累積簽到 {} 次，已經上課 {} 分鐘囉快坐好吧".format(user, result[0][0], self.minutes_passed))
             conn.close()

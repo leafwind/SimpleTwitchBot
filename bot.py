@@ -21,10 +21,11 @@ with open('config.json') as fp:
     CONFIG = json.load(fp)
 
 class StreamStatus(object):
+    global CONFIG
     def __init__(self, channel):
         self.channel = channel
         self.is_live = False
-        conn = sqlite3.connect("{}.db".format(self.channel))
+        conn = sqlite3.connect(CONFIG['db'])
         c = conn.cursor()
         c.execute('''create table if not exists stream (id INTEGER, channel TEXT, game TEXT, created_at INTEGER, end_at INTEGER, PRIMARY KEY (id) ON CONFLICT REPLACE);''')
         c.execute('''create table if not exists channel_popularity (channel TEXT, ts INTEGER, n_user INTEGER, PRIMARY KEY (channel, ts) ON CONFLICT REPLACE);''')
@@ -33,7 +34,7 @@ class StreamStatus(object):
         conn.close()
 
     def update(self):
-        conn = sqlite3.connect("{}.db".format(self.channel))
+        conn = sqlite3.connect(CONFIG['db'])
         c = conn.cursor()
 
         now = int(time.time())
