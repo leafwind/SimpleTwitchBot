@@ -2,6 +2,7 @@ import requests
 import json
 import time
 import calendar
+import logging
 
 with open('config.json') as fp:
     CONFIG = json.load(fp)
@@ -12,7 +13,12 @@ def get_current_users(ch, user_type='all'):
     url = USERLIST_API.format(ch)
     r = requests.get(url).json()
     if user_type == 'all':
-        all_users = set(sum(r['chatters'].values(), []))
+        try:
+            all_users = set(sum(r['chatters'].values(), []))
+        except Exception as e:
+            logging.info("{}".format(r))
+            logging.exception("msg in another thread:")
+            all_users = set()
         return all_users
     elif user_type in ['moderators', 'staff', 'admins', 'global_mods', 'viewers']:
         users = set(r['chatters'][user_type])

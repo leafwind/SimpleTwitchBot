@@ -7,11 +7,9 @@ import json
 import logging
 import requests
 import random
-from slack_util import Slack
 import freq_reply
 import sqlite3
 import calendar
-slack = Slack()
 
 count_freq = {}
 
@@ -92,7 +90,6 @@ class MarkovLog(Command):
         bot.write(reply)
 
 class Log(Command):
-    global slack
     perm = Permission.User
 
     def match(self, bot, user, msg):
@@ -102,7 +99,6 @@ class Log(Command):
         now = int(time.time())
         channel = bot.factory.channel
 
-        slack.post_message(slack.channel_list[bot.factory.channel], msg, ":rabbit:", username=user)
         logging.warning("user: {}, channel: {}, ts: {}, msg: {}".format(user, channel, now, msg))
         conn = sqlite3.connect("{}.db".format(channel))
         c = conn.cursor()
