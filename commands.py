@@ -4,6 +4,7 @@ from threading import Thread
 import time
 import re
 import json
+import logging
 import requests
 import random
 from slack_util import Slack
@@ -86,12 +87,11 @@ class MarkovLog(Command):
         #    reply = bot.markov.chat(msg[12:])
         #    bot.write(reply)
         msg = msg[6:]
-        import logging
         logging.error(msg)
         reply = bot.markov.log(msg, 1)
         bot.write(reply)
 
-class SlackLog(Command):
+class Log(Command):
     global slack
     perm = Permission.User
 
@@ -99,7 +99,16 @@ class SlackLog(Command):
         return True
 
     def run(self, bot, user, msg):
+        now = int(time.time())
+        channel = bot.factory.channel
+
         slack.post_message(slack.channel_list[bot.factory.channel], msg, ":rabbit:", username=user)
+        logging.warning("user: {}, channel: {}, ts: {}, msg: {}".format(user, channel, now, msg))
+        conn = sqlite3.connect("{}.db".format(channel))
+        c = conn.cursor()
+        c.execute('''insert into chat (user, channel, ts, msg) VALUES (\'{}\', \'{}\', {}, \'{}\');'''.format(user, channel, now, msg))
+        conn.commit()
+        conn.close()
 
 class Calculator(Command):
     ''' A chat calculator that can do some pretty
@@ -246,42 +255,10 @@ class SignIn(Command):
                 c.execute('''SELECT count(1) from signin where user = \'{}\';'''.format(user))
                 result = c.fetchall()
                 bot.write("{} 簽到成功！累積簽到 {} 次，已經上課 {} 分鐘囉快坐好吧".format(user, result[0][0], self.minutes_passed))
+            conn.close()
         else:
             pass
 
-
-class StreamStatus(Command):
-    global slack
-    perm = Permission.User
-    online = False
-
-    def get_status(self, bot):
-        url = 'https://api.twitch.tv/kraken/streams/' + bot.factory.channel
-        headers = {'Accept': 'application/vnd.twitchtv.v3+json'}
-        r = requests.get(url, headers=headers)
-        info = json.loads(r.text)
-        if 'stream' not in info or info['stream'] == None:
-            (self.n_user, self.created_at) = (0, "")
-            return False
-        else:
-            self.n_user = info['stream']['viewers']
-            self.created_at = info['stream']['created_at']
-            return True
-
-    def match(self, bot, user, msg):
-        current_status = self.get_status(bot)
-        #print("last: {}, current: {}".format(self.online, current_status))
-        if self.online != current_status:
-            self.online = current_status
-            return True
-        else:
-            return False
-
-    def run(self, bot, user, msg):
-        if self.online:
-            slack.post_message(slack.channel_list[bot.factory.channel], "<!group> 開台囉！", ":rabbit:", username=user)
-        else:
-            slack.post_message(slack.channel_list[bot.factory.channel], "<!group> 關台哭哭喔～～！", ":rabbit:", username=user)
 
 class Timer(Command):
     '''Sets a timer that will alert you when it runs out'''

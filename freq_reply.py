@@ -18,11 +18,6 @@ mapping = {
             "response": "(´;ω;`)ヾ(･∀･`) 下次請早",
             "freq": 2,
         },
-        "xd": {
-            "trigger_list": ["xd", "www"],
-            "response": "wwwwwwww",
-            "freq": 5,
-        },
         "cc": {
             "trigger_list": ["ccㄏㄏ", "cc呵呵", "cc喝喝"],
             "response": "ヽ(́◕◞౪◟◕‵)ﾉ CCㄏㄏ",
@@ -40,6 +35,10 @@ mapping = {
             "trigger_list": ["餃"],
             "response": "ヽ(`Д´)ノ 不要跟我說水餃",
             "freq": 5,
+        },
+        "fu": {
+            "trigger_list": ["ㄈ", "ㄈㄟ"],
+            "response": "ㄈ",
         },
     }
 }

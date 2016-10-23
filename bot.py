@@ -10,6 +10,7 @@ import logging
 import signal
 import json
 import time
+import sqlite3
 
 from markov_chain import MarkovChat
 
@@ -17,6 +18,58 @@ USERLIST_API = "http://tmi.twitch.tv/group/user/{}/chatters"
 with open('config.json') as fp:
     CONFIG = json.load(fp)
 
+class StreamStatus(object):
+    def __init__(self, channel):
+        self.channel = channel
+        self.is_live = False
+        self._id = 0
+        self.created_at = 0
+        self.end_at = 0
+        self.game = ""
+        self.n_user = 0
+        conn = sqlite3.connect("{}.db".format(self.channel))
+        c = conn.cursor()
+        c.execute('''create table if not exists stream (id INTEGER, channel TEXT, game TEXT, created_at INTEGER, end_at INTEGER, PRIMARY KEY (id) ON CONFLICT REPLACE);''')
+        c.execute('''create table if not exists channel_popularity (channel TEXT, ts INTEGER, n_user INTEGER, PRIMARY KEY (channel, ts) ON CONFLICT REPLACE);''')
+        c.execute('''create table if not exists chat (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, channel TEXT, ts INTEGER, msg TEXT, UNIQUE (user, channel, ts, msg) ON CONFLICT IGNORE);''')
+        conn.commit()
+        conn.close()
+
+    def update(self):
+        from twitch_utils import get_stream_status
+        now = int(time.time())
+        (is_live, _id, created_at_ts, game, n_user) = get_stream_status(self.channel)
+        if self.is_live != is_live and not is_live:
+            self.end_at = now
+        self.is_live = is_live
+        self._id = _id
+        self.created_at = created_at_ts
+        self.game = game
+        self.n_user = n_user
+
+        conn = sqlite3.connect("{}.db".format(self.channel))
+        c = conn.cursor()
+        logging.warning("_id: {}, game: {}, created_at: {}, end_at: {}".format(_id, game, created_at_ts, self.end_at))
+        c.execute('''insert into stream (id, channel, game, created_at, end_at) VALUES ({}, \'{}\', \'{}\', {}, {});'''.format(self._id, self.channel, self.game, self.created_at, self.end_at))
+
+        logging.warning("channel: {}, ts: {}, n_user: {}".format(self.channel, now, n_user))
+        c.execute('''insert into channel_popularity (channel, ts, n_user) VALUES (\'{}\', {}, {});'''.format(self.channel, now, self.n_user))
+
+        conn.commit()
+        conn.close()
+        return
+
+class CheckChannelStreamRepeat(Thread):
+    def __init__(self, t, ch, stream_status):
+        Thread.__init__(self)
+        self.t = t
+        self.ch = ch
+        self.stream_status = stream_status
+
+    def run(self):
+        while True:
+            self.stream_status.update()
+            time.sleep(self.t)
 
 class TwitchBot(irc.IRCClient, object):
     last_warning = defaultdict(int)
@@ -37,6 +90,11 @@ class TwitchBot(irc.IRCClient, object):
         self.factory = factory
         self.markov = MarkovChat(factory.channel_file, factory.model_files, factory.chattiness)
         self.channel = "#" + factory.channel
+        self.stream_status = StreamStatus(factory.channel)
+
+        # update stream status per min
+        thread = CheckChannelStreamRepeat(10, factory.channel, self.stream_status)
+        thread.start()
         
     def signedOn(self):
         self.factory.wait_time = 1
@@ -319,7 +377,7 @@ class TwitchBot(irc.IRCClient, object):
             #cmds.MarkovLog(self),
             cmds.ChannelCommands(self),
             cmds.FreqReply(self),
-            cmds.SlackLog(self),
+            cmds.Log(self),
             cmds.SignIn(self),
             #cmds.StreamStatus(self),
         ]
