@@ -2,6 +2,7 @@ from twisted.words.protocols import irc
 from twisted.internet import reactor
 from collections import defaultdict
 from commands import Permission
+import threading
 from threading import Thread
 import traceback
 import commands
@@ -13,6 +14,7 @@ import time
 import sqlite3
 
 from markov_chain import MarkovChat
+from twitch_utils import get_stream_status, get_current_users
 
 USERLIST_API = "http://tmi.twitch.tv/group/user/{}/chatters"
 with open('config.json') as fp:
@@ -22,11 +24,6 @@ class StreamStatus(object):
     def __init__(self, channel):
         self.channel = channel
         self.is_live = False
-        self._id = 0
-        self.created_at = 0
-        self.end_at = 0
-        self.game = ""
-        self.n_user = 0
         conn = sqlite3.connect("{}.db".format(self.channel))
         c = conn.cursor()
         c.execute('''create table if not exists stream (id INTEGER, channel TEXT, game TEXT, created_at INTEGER, end_at INTEGER, PRIMARY KEY (id) ON CONFLICT REPLACE);''')
@@ -36,24 +33,40 @@ class StreamStatus(object):
         conn.close()
 
     def update(self):
-        from twitch_utils import get_stream_status
-        now = int(time.time())
-        (is_live, _id, created_at_ts, game, n_user) = get_stream_status(self.channel)
-        if self.is_live != is_live and not is_live:
-            self.end_at = now
-        self.is_live = is_live
-        self._id = _id
-        self.created_at = created_at_ts
-        self.game = game
-        self.n_user = n_user
-
         conn = sqlite3.connect("{}.db".format(self.channel))
         c = conn.cursor()
-        logging.warning("_id: {}, game: {}, created_at: {}, end_at: {}".format(_id, game, created_at_ts, self.end_at))
-        c.execute('''insert into stream (id, channel, game, created_at, end_at) VALUES ({}, \'{}\', \'{}\', {}, {});'''.format(self._id, self.channel, self.game, self.created_at, self.end_at))
 
-        logging.warning("channel: {}, ts: {}, n_user: {}".format(self.channel, now, n_user))
-        c.execute('''insert into channel_popularity (channel, ts, n_user) VALUES (\'{}\', {}, {});'''.format(self.channel, now, self.n_user))
+        now = int(time.time())
+        (is_live, _id, created_at_ts, game, n_user) = get_stream_status(self.channel)
+        if not is_live: # offline now
+            if self.is_live != is_live: # online switched to offline
+                # update the end ts of the last stream (end_at = 0 means is it not updated)
+                last_stream_query = '''select id, created_at from stream where channel = \'{}\' and end_at = 0 order by created_at desc limit 1;'''.format(self.channel)
+                logging.info(last_stream_query)
+                c.execute(last_stream_query)
+                result = c.fetchall()
+                if len(result) == 0:
+                    logging.error("error: {} no last stream log".format(self.channel))
+                else:
+                    _id_last_online = result[0][0]
+                    created_at_ts_last_online = result[0][1]
+                    c.execute('''update stream set end_at = {} where id = {} and created_at = {};'''.format(now, _id_last_online, created_at_ts_last_online))
+                    conn.commit() # prevent not sync, commmit first
+                # set all end_at = 1 for remain end_at = 0 stream recored
+                query = '''update stream set end_at = 1 where channel = \'{}\' and end_at = 0;'''.format(self.channel)
+                c.execute(last_stream_query)
+            else: # continuous offline
+                pass
+        else: # online
+            logging.warning("_id: {}, game: {}, created_at: {}, end_at: {}".format(_id, game, created_at_ts, 0))
+            c.execute('''insert into stream (id, channel, game, created_at, end_at) VALUES ({}, \'{}\', \'{}\', {}, {});'''.format(_id, self.channel, game, created_at_ts, 0))
+
+        self.is_live = is_live
+        
+        n_user_unofficial_api = len(get_current_users(self.channel))
+        # record n_user no matter when online or offline
+        logging.warning("channel: {}, ts: {}, n_user: {} ({} from unofficial API)".format(self.channel, now, n_user, n_user_unofficial_api))
+        c.execute('''insert into channel_popularity (channel, ts, n_user) VALUES (\'{}\', {}, {});'''.format(self.channel, now, n_user if n_user > 0 else n_user_unofficial_api))
 
         conn.commit()
         conn.close()
@@ -67,9 +80,13 @@ class CheckChannelStreamRepeat(Thread):
         self.stream_status = stream_status
 
     def run(self):
-        while True:
-            self.stream_status.update()
-            time.sleep(self.t)
+        while getattr(threading.currentThread(), "do_run", True):
+            try:
+                self.stream_status.update()
+                time.sleep(self.t)
+            except Exception as e:
+                logging.exception("msg in another thread")
+        logging.info("close the thread: CheckChannelStreamRepeat")
 
 class TwitchBot(irc.IRCClient, object):
     last_warning = defaultdict(int)
@@ -93,8 +110,8 @@ class TwitchBot(irc.IRCClient, object):
         self.stream_status = StreamStatus(factory.channel)
 
         # update stream status per min
-        thread = CheckChannelStreamRepeat(10, factory.channel, self.stream_status)
-        thread.start()
+        self.thread = CheckChannelStreamRepeat(10, factory.channel, self.stream_status)
+        self.thread.start()
         
     def signedOn(self):
         self.factory.wait_time = 1
@@ -388,6 +405,10 @@ class TwitchBot(irc.IRCClient, object):
         self.quit()
 
     def terminate(self):
+        # join the CheckChannelStreamRepeat thread
+        self.thread.do_run = False
+        self.thread.join()
+
         self.close_commands()
         reactor.stop()
 
