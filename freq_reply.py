@@ -28,11 +28,11 @@ mapping = {
             "response": "(ゝ∀･) 好的好的",
         },
         "gif": {
-            "trigger_list": ["gif", "還在這", "卡關"],
+            "trigger_list": ["gif", "還在這", "卡關", "計數台", "技術台"],
             "response": "ヽ(∀ﾟ )人(ﾟ∀ﾟ)人( ﾟ∀)人(∀ﾟ )人(ﾟ∀ﾟ)人( ﾟ∀)ﾉ 計數台",
         },
         "dumpling": {
-            "trigger_list": ["餃"],
+            "trigger_list": ["餃", "食交"],
             "response": "ヽ(`Д´)ノ 不要跟我說水餃",
             "freq": 5,
         },
