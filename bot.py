@@ -105,13 +105,14 @@ class TwitchBot(irc.IRCClient, object):
     commands = []
 
     def __init__(self, factory):
+        global CONFIG
         self.factory = factory
         self.markov = MarkovChat(factory.channel_file, factory.model_files, factory.chattiness)
         self.channel = "#" + factory.channel
         self.stream_status = StreamStatus(factory.channel)
 
         # update stream status per min
-        self.thread = CheckChannelStreamRepeat(10, factory.channel, self.stream_status)
+        self.thread = CheckChannelStreamRepeat(CONFIG['check_interval'], factory.channel, self.stream_status)
         self.thread.start()
         
     def signedOn(self):
