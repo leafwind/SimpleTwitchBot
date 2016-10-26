@@ -107,7 +107,7 @@ class TwitchBot(irc.IRCClient, object):
     def __init__(self, factory):
         global CONFIG
         self.factory = factory
-        self.markov = MarkovChat(factory.channel_file, factory.model_files, factory.chattiness)
+        #self.markov = MarkovChat(factory.channel_file, factory.model_files, factory.chattiness)
         self.channel = "#" + factory.channel
         self.stream_status = StreamStatus(factory.channel)
 
