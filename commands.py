@@ -209,6 +209,34 @@ class ChannelCommands(Command):
                 output = random.choice(channel_commands[channel][cmd.lstrip("!")])
                 bot.write("{}".format(output))
 
+class Counter(Command):
+    perm = Permission.Moderator
+
+    def match(self, bot, user, msg):
+        cmd = msg.lower().strip()
+        if cmd in ["!sign", "!簽到", "!打卡"]:
+            return True
+        else:
+            return False
+
+    def run(self, bot, user, msg):
+        global CONFIG
+        conn = sqlite3.connect(CONFIG['db'])
+        c = conn.cursor()
+        result = c.fetchall()
+        if len(result) != 0:
+            pass
+        else:
+            c.execute('''INSERT OR REPLACE INTO coins (user, coins)
+                        VALUES ( \'{}\', COALESCE((SELECT coins FROM coins WHERE user = \'{}\'), 0) );'''
+                        .format(user, user)
+                    )
+            c.execute('''UPDATE coins SET coins = coins + {} WHERE user = \'{}\';'''.format(coins, user))
+            conn.commit()
+            result = c.fetchall()
+            bot.write("{} 簽到成功！累積簽到 {} 次，已經上課 {} 分鐘囉快坐好吧".format(user, result[0][0], self.minutes_passed))
+        conn.close()
+
 class SignIn(Command):
     perm = Permission.User
     online = False

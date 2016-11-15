@@ -55,7 +55,7 @@ class StreamStatus(object):
                     conn.commit() # prevent not sync, commmit first
                 # set all end_at = 1 for remain end_at = 0 stream recored
                 query = '''update stream set end_at = 1 where channel = \'{}\' and end_at = 0;'''.format(self.channel)
-                c.execute(last_stream_query)
+                c.execute(query)
             else: # continuous offline
                 pass
         else: # online
@@ -110,10 +110,19 @@ class TwitchBot(irc.IRCClient, object):
         #self.markov = MarkovChat(factory.channel_file, factory.model_files, factory.chattiness)
         self.channel = "#" + factory.channel
         self.stream_status = StreamStatus(factory.channel)
+        self.check_table_exists()
 
         # update stream status per min
         self.thread = CheckChannelStreamRepeat(CONFIG['check_interval'], factory.channel, self.stream_status)
         self.thread.start()
+
+    def check_table_exists(self):
+        global CONFIG
+        conn = sqlite3.connect(CONFIG['db'])
+        c = conn.cursor()
+        c.execute('''create table if not exists counter (item TEXT PRIMARY KEY, count INTEGER);''')
+        conn.commit()
+        conn.close()
         
     def signedOn(self):
         self.factory.wait_time = 1
