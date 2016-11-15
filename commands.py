@@ -210,6 +210,7 @@ class ChannelCommands(Command):
                 bot.write("{}".format(output))
 
 class Counter(Command):
+    #TODO: counter for something, maybe only for moderator
     perm = Permission.Moderator
 
     def match(self, bot, user, msg):
