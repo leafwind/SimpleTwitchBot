@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from twisted.words.protocols import irc
 from twisted.internet import reactor
 from collections import defaultdict
@@ -333,8 +334,8 @@ class TwitchBot(irc.IRCClient, object):
                     if time.time() - self.last_warning[cname] < 60:
                         continue
                     self.last_warning[cname] = time.time()
-                    reply = "/w {} 權限不足，需要的最小權限為 {}."
-                    self.write(reply.format(user, perm_levels[cmd.perm]))
+                    reply = "/w {} 權限不足，需要的最小權限為 {}.".format(user, perm_levels[cmd.perm])
+                    self.write(reply)
                 else:
                     cmd.run(self, user, msg)
                     logging.error("running {}".format(cname))
