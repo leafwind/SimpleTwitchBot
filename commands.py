@@ -279,8 +279,7 @@ class SignIn(Command):
             c.execute('''SELECT 1 from signin where user = \'{}\' and ts_day = {} and channel = \'{}\';'''.format(user, self.ts_day, bot.factory.channel))
             result = c.fetchall()
             if len(result) != 0:
-                #print("已經上課 {} 分鐘囉".format(self.minutes_passed))
-                pass
+                bot.write("/w {} 今天已經簽到成功囉，目前一天只開放簽到一次唷 ᕙ( ･ㅂ･)ᕗ ".format(user))
             else:
                 c.execute('''insert into signin (user, ts_day, channel) VALUES (\'{}\', {}, \'{}\');'''.format(user, self.ts_day, bot.factory.channel))
                 conn.commit()
@@ -289,8 +288,7 @@ class SignIn(Command):
                 bot.write("{} 簽到成功！累積簽到 {} 次，已經上課 {} 分鐘囉快坐好吧".format(user, result[0][0], self.minutes_passed))
             conn.close()
         else:
-            pass
-
+            bot.write("/w {} 現在不是上課時間，不能簽到喔！ _(┐「﹃ﾟ｡)_".format(user))
 
 class Timer(Command):
     '''Sets a timer that will alert you when it runs out'''

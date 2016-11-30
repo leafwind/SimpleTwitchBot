@@ -333,7 +333,7 @@ class TwitchBot(irc.IRCClient, object):
                     if time.time() - self.last_warning[cname] < 60:
                         continue
                     self.last_warning[cname] = time.time()
-                    reply = "{}: You don't have access to that command. Minimum level is {}."
+                    reply = "/w {} 權限不足，需要的最小權限為 {}."
                     self.write(reply.format(user, perm_levels[cmd.perm]))
                 else:
                     cmd.run(self, user, msg)
