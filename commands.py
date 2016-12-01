@@ -31,6 +31,17 @@ with open('channel_commands.json') as fp:
                 b_output = u_output.encode('utf-8')
                 channel_commands[b_channel][b_cmd].append(b_output)
 
+global_whisper_commands = {}
+with open('global_whisper_commands.json') as fp:
+    global_whisper_commands_orig = json.load(fp)
+    for u_cmd in global_whisper_commands_orig:
+        b_cmd = u_cmd.encode('utf-8')
+        if b_cmd not in global_whisper_commands:
+            global_whisper_commands[b_cmd] = []
+        for u_output in global_whisper_commands_orig[u_cmd]:
+            b_output = u_output.encode('utf-8')
+            global_whisper_commands[b_cmd].append(b_output)
+
 with open('config.json') as fp:
     CONFIG = json.load(fp)
 
@@ -179,6 +190,24 @@ class FreqReply(Command):
                                 count = 0
                                 print("write msg: {}".format(msg))
                         count_freq[channel][key] = {"begin": begin, "count": count}
+
+class GlobalWhisperCommands(Command):
+    perm = Permission.User
+    global global_whisper_commands
+    def match(self, bot, user, msg):
+        cmd = msg.lower().strip()
+        channel = bot.factory.channel
+        if cmd.lstrip("!") in global_whisper_commands:
+            return True
+        return False
+
+    def run(self, bot, user, msg):
+        cmd = msg.lower().strip()
+        channel = bot.factory.channel
+        if channel in channel_commands:
+            if cmd.lstrip("!") in global_whisper_commands:
+                output = random.choice(global_whisper_commands[cmd.lstrip("!")])
+                bot.write("/w {} {}".format(user, output))
 
 class ChannelCommands(Command):
     perm = Permission.User

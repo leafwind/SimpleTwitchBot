@@ -404,6 +404,7 @@ class TwitchBot(irc.IRCClient, object):
             cmds.Calculator(self),
             cmds.Timer(self),
             #cmds.MarkovLog(self),
+            cmds.GlobalWhisperCommands(self),
             cmds.ChannelCommands(self),
             cmds.FreqReply(self),
             cmds.Log(self),
