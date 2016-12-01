@@ -205,7 +205,10 @@ class GlobalWhisperCommands(Command):
         cmd = msg.lower().strip()
         channel = bot.factory.channel
         if channel in channel_commands:
-            if cmd.lstrip("!") in global_whisper_commands:
+            if cmd.lstrip("!") == 'oripyon':
+                for output in global_whisper_commands[cmd.lstrip("!")]:
+                    bot.write("/w {} {}".format(user, output))
+            elif cmd.lstrip("!") in global_whisper_commands:
                 output = random.choice(global_whisper_commands[cmd.lstrip("!")])
                 bot.write("/w {} {}".format(user, output))
 
