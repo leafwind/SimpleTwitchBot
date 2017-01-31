@@ -317,7 +317,7 @@ class SignIn(Command):
                 conn.commit()
                 c.execute('''SELECT count(1) from signin where user = \'{}\' and channel = \'{}\';'''.format(user, bot.factory.channel))
                 result = c.fetchall()
-                bot.write("{} 簽到成功！累積簽到 {} 次，已經上課 {} 分鐘囉快坐好吧".format(user, result[0][0], self.minutes_passed))
+                bot.write("/w {} 簽到成功！累積簽到 {} 次，已經上課 {} 分鐘囉快坐好吧".format(user, result[0][0], self.minutes_passed))
             conn.close()
         else:
             bot.write("/w {} 現在不是上課時間，不能簽到喔！ _(┐「﹃ﾟ｡)_".format(user))
