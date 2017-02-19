@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 mapping = {
     "wow_tomato": {
+        "notseen": {
+            "trigger_list": ["不理我"],
+            "response": "ㄈ茄忙於實況沒看到，別難過，還有我在(｡•ㅅ•｡)♡",
+            "freq": 1,
+        },
         "qq": {
             "trigger_list": ["qq", "qaq", "biblethump"],
             "response": "(☍﹏⁰) ヽ(･ω･｀) 幫QQ",

@@ -176,7 +176,7 @@ class FreqReply(Command):
                         begin = count_freq[channel][key].get("begin", 0)
                         count = count_freq[channel][key].get("count", 0)
                         freq = mapping[key].get("freq", 3)
-                        if now - begin > 60:
+                        if now - begin > 60 and freq > 1:
                             begin = now
                             count = 1
                             print("reset {} counter - begin ts: {}, count: {}, freq: {}".format(key, begin, count, freq))
