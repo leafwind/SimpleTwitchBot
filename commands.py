@@ -230,13 +230,13 @@ class ChannelCommands(Command):
             if cmd.lstrip("!") == '會開嗎':
                 day_ratio = (int(time.time()) + 8 * 3600) % 86400 / 3600.0
                 if day_ratio < 10.0:
-                    bot.write("早上有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
+                    bot.write("早上有開就是會開，沒開就是不會開，訂閱者可以優先獲取開台預告 ლ(╹◡╹ლ)")
                 elif day_ratio < 14.0:
-                    bot.write("下午有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
+                    bot.write("下午有開就是會開，沒開就是不會開，訂閱者可以優先獲取開台預告 ლ(╹◡╹ლ)")
                 elif day_ratio < 22.0:
-                    bot.write("晚上有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
+                    bot.write("晚上有開就是會開，沒開就是不會開，訂閱者可以優先獲取開台預告 ლ(╹◡╹ლ)")
                 else:
-                    bot.write("明天有開就是會開, 沒開就是不會開 ლ(╹◡╹ლ)")
+                    bot.write("明天有開就是會開，沒開就是不會開，訂閱者可以優先獲取開台預告 ლ(╹◡╹ლ)")
             elif cmd.lstrip("!") in channel_commands[channel]:
                 output = random.choice(channel_commands[channel][cmd.lstrip("!")])
                 bot.write("{}".format(output))
