@@ -97,8 +97,6 @@ class TwitchBot(irc.IRCClient, object):
     ignore_list = CONFIG['ignore_list']
     nickname = str(CONFIG['username'])
     password = str(CONFIG['oauth_key'])
-    #channel = "#" + str(CONFIG['channel'])
-    #channel = "#" + "leafwind"
     #markov = MarkovChat("train/leafwind.txt")
 
     host_target = False
