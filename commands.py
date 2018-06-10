@@ -304,7 +304,7 @@ class SignIn(Command):
         self.now = int(time.time())
         self.ts_day = int(self.now / 86400.0) * 86400
         self.online = self.get_status(bot)
-        prompt = "/w {} 由於密語不穩定，若沒回應自己去這裡查 (́◉◞౪◟◉‵) http://bot.leafwind.tw/signin/{}/{}".format(user, bot.factory.channel, user)
+        prompt = "/w {} 由於密語不穩定，若沒回應自己去這裡查 (́◉◞౪◟◉‵) https://ori.leafwind.tw/signin/{}/{}".format(user, bot.factory.channel, user)
         if self.online:
             conn = sqlite3.connect(CONFIG['db'])
             c = conn.cursor()
