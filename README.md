@@ -1,3 +1,36 @@
+# setup
+
+## setup config
+
+`cp config.json.template config.json`
+
+modify `config.json`:
+
+```
+"username": the bot user login ID
+"oauth_key": the bot user login key
+"client_id": the key to access channel status (https://api.twitch.tv/kraken/streams/ API)
+"ignore_list": who's message will be ignored by bot
+"owner_list": who's message have control to bot
+"db": where to store the database, default "twitch_log.db", this db will be used by another http server project `twitch_analysis` which is run on the same host
+"check_interval": how long bot will check the channel is streaming or not (seconds)
+```
+
+## setup environment
+
+```
+virtualenv __
+. __/bin/activate
+pip install -r requirements.txt
+```
+
+# run
+
+previously on a screen scheme, will migrate to suprtvisord in the future
+```
+python twitch_irc.py --channel [channel] --chattiness 0 --models [channel]
+```
+
 **SimpleTwitchBot**
 ===============
 
