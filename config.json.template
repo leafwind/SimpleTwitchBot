@@ -1,0 +1,9 @@
+{
+    "username": "",
+    "oauth_key": "oauth:xxx",
+    "client_id": "",
+    "ignore_list": [],
+    "owner_list": ["leafwind"],
+    "db": "twitch_log.db",
+    "check_interval": 60
+}
